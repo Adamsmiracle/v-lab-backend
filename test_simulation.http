@@ -1,0 +1,127 @@
+### Simple REST Client Test for SimulationRequest
+
+# This is a sample HTTP request for VS Code REST Client extension (.http file)
+# Save this as test_simulation.http and use the REST Client extension to send it
+
+
+
+## Check the health of the backend service
+GET http://localhost:8000/health
+Accept: application/json  
+{
+
+},
+
+
+# sample
+
+POST http://localhost:8000/simulate
+Content-Type: application/json
+
+{
+  "circuit_name": "Simple Voltage Divider",
+  "netlist_string": ".title Voltage Divider\nV1 in 0 -500\nR1 in out 10k\nR2 out 0 20k\n .op \n.end",
+  "analysis_type": "op",
+  "analysis_parameters": {},
+  "requested_results": [
+    {"type": "node_voltage", "name": "out"},
+    {"type": "branch_current", "name": "V1"}
+  ]
+}
+
+
+
+
+#### Simple Rectifier Circuit Simulation
+### Corrected REST Client Test for SimulationRequest
+
+# Save this as test_simulation.http and use the VS Code REST Client extension to send it
+
+POST http://localhost:8000/simulate
+Content-Type: application/json
+
+{
+  "circuit_name": "Corrected Rectifier Circuit",
+  "netlist_string": ".title Rectifier circuit
+  V1 1 0 DC 5
+  \nR1 1 2 10k
+  \nD1 2 3 D
+  \nR2 3 0 10k
+  \nV2 4 0 DC 5
+  \n.model D D
+  \n.op\n.end",
+  
+  "analysis_type": "op",
+  "analysis_parameters": {},
+  "requested_results": [
+    {"type": "node_voltage", "name": "2"},
+    {"type": "node_voltage", "name": "3"},
+    {"type": "node_voltage", "name": "4"},
+    {"type": "branch_current", "name": "V1"},
+    {"type": "branch_current", "name": "V2"}
+  ]
+}
+
+#### Simple Voltage Divider Simulation
+POST http://localhost:8000/simulate
+Content-Type: application/json
+
+{
+  "circuit_name": "Simple Voltage Divider",
+  "netlist_string": ".title Voltage Divider\nV1 in 0 -500\nR1 in out 10k\nR2 out 0 20k\n .op \n.end",
+  "analysis_type": "op",
+  "analysis_parameters": {},
+  "requested_results": [
+    {"type": "node_voltage", "name": "out"},
+    {"type": "branch_current", "name": "V1"}
+  ]
+}
+
+
+
+#OPERATING POINT ANALYSIS
+
+### Complex Common-Emitter Amplifier Simulation
+POST http://localhost:8000/simulate
+Content-Type: application/json
+
+{
+  "circuit_name": "Common-Emitter Amplifier",
+  "netlist_string": "* Common-Emitter Amplifier with Bias and Bypass\nVCC  VCC  0   12\nVIN  IN   0   AC 1 SIN(0 0.01 1k)\nRB1  VCC  B   100k\nRB2  B    0   22k\nRC   VCC  C   2.2k\nRE   E    0   1k\nCIN  IN   B   10u\nCE   E    0   100u\nRL   C    OUT 10k\nCOUT OUT  0   10u\nQ1   C    B   E   QNPN\n\n.model QNPN NPN(IS=1E-14 BF=200)\n.op\n.end",
+  "analysis_type": "op",
+  "analysis_parameters": {},
+  "requested_results": [
+    {"type": "node_voltage", "name": "c"}, 
+    {"type": "node_voltage", "name": "b"},   
+    {"type": "node_voltage", "name": "e"},    
+    {"type": "branch_current", "name": "vcc"}, 
+    {"type": "branch_current", "name": "vin"}  
+  ]
+}
+
+
+
+
+
+
+#AC ANALYSIS TEST
+
+### AC Analysis Test: RC Low-Pass Filter
+
+POST http://localhost:8000/simulate
+Content-Type: application/json
+
+{
+  "circuit_name": "RC Low-Pass Filter AC Analysis",
+  "netlist_string": ".title RC Low-Pass Filter\nVIN 1 0 AC 1\nR1 1 2 1k\nC1 2 0 1u\n.ac dec 10 10 1Meg\n.end",
+  "analysis_type": "ac",
+  "analysis_parameters": {
+    "start_frequency": "10Hz",
+    "stop_frequency": "1MegHz",
+    "number_of_points": 10,
+    "sweep_type": "dec"
+  },
+  "requested_results": [
+    {"type": "node_voltage", "name": "2"}
+  ]
+}

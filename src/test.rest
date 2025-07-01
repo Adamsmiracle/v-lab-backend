@@ -1,0 +1,30 @@
+## test post
+POST http://127.0.0.1:8000/simulate
+
+Content-Type: application/json
+{
+  "circuit_name": "Test Voltage Divider",
+  "netlist_string": ".title Voltage Divider\nVsource in 0 5V\nR1 in out 10kOhm\nR2 out 0 20kOhm\n.op\n.end",
+  "analysis_type": "op",
+  "analysis_parameters": {},
+  "requested_results": [
+    {
+      "type": "node_voltage",
+      "name": "out"
+    },
+    {
+      "type": "node_voltage",
+      "name": "in"
+    },
+    {
+      "type": "branch_current",
+      "name": "vsource"
+    }
+  ]
+},
+
+
+
+##test health
+
+POST http://localhost:8000
