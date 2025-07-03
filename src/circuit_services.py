@@ -5,7 +5,9 @@ from PySpice.Spice.Netlist import Circuit
 # when passed as parameters, or when defining components.
 from PySpice.Unit import *
 import sys
+import PySpice
 from typing import Dict, List, Union, Any, Optional
+# Removed `import re` as _parse_analysis_param is removed
 
 # Import the models we defined
 from .models import SimulationRequest, SimulationResults, NodeVoltageResult, BranchCurrentResult, AnalysisType
@@ -16,7 +18,7 @@ logger = Logging.setup_logging()
 # # Configure the default SPICE simulator globally
 # # THIS BLOCK MUST BE UNCOMMENTED FOR SIMULATIONS TO WORK
 # if sys.platform == 'linux' or sys.platform == 'linux2':
-#     PySpice.Spice.Simulation.CircuitSimulator.DEFAULT_SIMULATOR = 'ngspice-subprocess'
+PySpice.Spice.Simulation.CircuitSimulator.DEFAULT_SIMULATOR = 'ngspice-subprocess'
 # elif sys.platform == 'win32':
 #     # On Windows, PySpice might try to use a DLL or subprocess.
 #     # If NGSPICE is in your PATH, 'ngspice-subprocess' might still work.
@@ -44,6 +46,10 @@ class CircuitSimulatorService:
         circuit.raw_spice = netlist_string
         return circuit
 
+    # Removed the _parse_analysis_param method as it's no longer needed.
+    # PySpice's simulator methods are expected to handle unit strings directly now.
+
+
     def _run_simulation(self, circuit: Circuit, analysis_type: AnalysisType, analysis_params: Dict[str, Union[str, float, int]]) -> Any:
         """
         Runs the specified simulation on the circuit.
@@ -63,26 +69,27 @@ class CircuitSimulatorService:
             if not step_time or not end_time:
                 raise ValueError("Transient analysis requires 'step_time' and 'end_time' parameters.")
             
-            # PySpice's .tran method can often interpret unit strings directly (e.g., '1us', '5ms')
-            analysis = simulator.tran(step_time=step_time, end_time=end_time) # Corrected to .tran from .transient
+            parsed_step_time = self._parse_pyspice_unit_string(step_time)
+            parsed_end_time = self._parse_pyspice_unit_string(end_time)
+            print(f"DEBUG: step_time={step_time}, parsed_step_time={parsed_step_time}, end_time={end_time}, parsed_end_time={parsed_end_time}")
+            # Pass parameters directly; PySpice's .tran method can interpret unit strings
+            analysis = simulator.transient(step_time=parsed_step_time, end_time=parsed_end_time)
         
         elif analysis_type == AnalysisType.AC:
             # AC analysis requires start_frequency, stop_frequency, number_of_points, and sweep_type
             start_frequency = analysis_params.get('start_frequency')
-            stop_frequency = analysis_params.get('stop_frequency')
+            stop_frequency = analysis_params.get('stop_frequency') # Corrected keyword
             number_of_points = analysis_params.get('number_of_points')
             sweep_type = analysis_params.get('sweep_type', 'lin') # Default to linear sweep
 
             if not all([start_frequency, stop_frequency, number_of_points]):
                 raise ValueError("AC analysis requires 'start_frequency', 'stop_frequency', and 'number_of_points'.")
 
-            # PySpice's .ac method can often interpret unit strings directly (e.g., '1kHz', '10MHz')
-            analysis = simulator.ac(
-                number_of_points=number_of_points,
-                start_frequency=start_frequency,
-                stop_frequency=stop_frequency,
-                variation=sweep_type
-            )
+            # Pass parameters directly; PySpice's .ac method can interpret unit strings
+            analysis = simulator.ac(start_frequency=start_frequency,
+                                    stop_frequency=stop_frequency, # Corrected keyword
+                                    number_of_points=number_of_points,
+                                    variation=sweep_type)
         
         elif analysis_type == AnalysisType.DC:
             # DC sweep analysis requires source, start, stop, step
@@ -94,23 +101,24 @@ class CircuitSimulatorService:
             if not all([source_name, start_value, end_value, step_value]):
                 raise ValueError("DC analysis requires 'source_name', 'start_value', 'end_value', and 'step_value'.")
 
-            # PySpice's .dc method can often interpret unit strings directly (e.g., '5V', '0.1V')
+            # Pass parameters directly
             analysis = simulator.dc(source_name, start_value, end_value, step_value)
 
         elif analysis_type == AnalysisType.NOISE:
-            # Noise analysis requires output_node, input_source, number_of_points, start_frequency, stop_frequency, sweep_type
+            # Noise analysis requires output_node, input_source, number_of_points, start_frequency, end_frequency, sweep_type
             # Example: .noise V(out) Vsource lin 10 1k 100k
             output_node = analysis_params.get('output_node')
             input_source = analysis_params.get('input_source')
             number_of_points = analysis_params.get('number_of_points')
             start_frequency = analysis_params.get('start_frequency')
-            stop_frequency = analysis_params.get('stop_frequency')
+            end_frequency = analysis_params.get('end_frequency') # Noise still uses end_frequency in PySpice
             sweep_type = analysis_params.get('sweep_type', 'lin')
 
-            if not all([output_node, input_source, number_of_points, start_frequency, stop_frequency]):
-                raise ValueError("Noise analysis requires 'output_node', 'input_source', 'number_of_points', 'start_frequency', and 'stop_frequency'.")
+            if not all([output_node, input_source, number_of_points, start_frequency, end_frequency]):
+                raise ValueError("Noise analysis requires 'output_node', 'input_source', 'number_of_points', 'start_frequency', and 'end_frequency'.")
 
-            analysis = simulator.noise(output_node, input_source, number_of_points, start_frequency, stop_frequency, variation=sweep_type)
+            # Pass parameters directly
+            analysis = simulator.noise(output_node, input_source, number_of_points, start_frequency, end_frequency, variation=sweep_type)
 
         elif analysis_type == AnalysisType.FOURIER:
             # Fourier analysis is often performed on transient results.
@@ -123,9 +131,7 @@ class CircuitSimulatorService:
             if not all([output_variable, fundamental_frequency]):
                 raise ValueError("Fourier analysis requires 'output_variable' and 'fundamental_frequency'.")
 
-            # PySpice's .fourier method can often interpret unit strings directly
-            # Note: The exact signature for .fourier might vary or it might be a post-processing step.
-            # Refer to PySpice documentation for precise usage if this causes issues.
+            # Pass parameters directly
             analysis = simulator.fourier(output_variable, fundamental_frequency)
 
         else:
@@ -251,3 +257,39 @@ class CircuitSimulatorService:
                 message=f"Simulation failed: {str(e)}",
                 simulation_type=request.analysis_type, # Even on failure, report type
             )
+
+    def _parse_pyspice_unit_string(self, value: str) -> float:
+        """
+        Converts a string like '1u', '5ms', '0.01', or a number to a float value for PySpice.
+        Returns None if the value is invalid.
+        """
+        if value is None:
+            return None
+        try:
+            if isinstance(value, (int, float)):
+                return float(value)
+            value = value.strip().lower()
+            unit_map = {
+                'ps': 1e-12, 'ns': 1e-9, 'us': 1e-6, 'ms': 1e-3, 's': 1,
+                'f': 1e-15, 'p': 1e-12, 'n': 1e-9, 'u': 1e-6, 'm': 1e-3,
+                'k': 1e3, 'meg': 1e6, 'g': 1e9, 't': 1e12
+            }
+            import re
+            match = re.match(r'^([\d\.eE+-]+)\s*([a-zA-Z]+)?$', value)
+            if match:
+                num_str = match.group(1)
+                unit = match.group(2)
+                if not num_str or num_str == '' or (unit and not num_str.replace('.', '', 1).isdigit()):
+                    return None
+                num = float(num_str)
+                if unit is None:
+                    return num
+                unit = unit.lower()
+                for k in sorted(unit_map, key=len, reverse=True):
+                    if unit == k:
+                        return num * unit_map[k]
+                return None
+            # fallback: try to convert directly
+            return float(value)
+        except Exception:
+            return None
