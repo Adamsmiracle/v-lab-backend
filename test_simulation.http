@@ -8,9 +8,6 @@
 ## Check the health of the backend service
 GET http://localhost:8000/health
 Accept: application/json  
-{
-
-},
 
 
 # sample
@@ -37,38 +34,13 @@ Content-Type: application/json
 
 # Save this as test_simulation.http and use the VS Code REST Client extension to send it
 
-POST http://localhost:8000/simulate
-Content-Type: application/json
-
-{
-  "circuit_name": "Corrected Rectifier Circuit",
-  "netlist_string": ".title Rectifier circuit
-  V1 1 0 DC 5
-  \nR1 1 2 10k
-  \nD1 2 3 D
-  \nR2 3 0 10k
-  \nV2 4 0 DC 5
-  \n.model D D
-  \n.op\n.end",
-  
-  "analysis_type": "op",
-  "analysis_parameters": {},
-  "requested_results": [
-    {"type": "node_voltage", "name": "2"},
-    {"type": "node_voltage", "name": "3"},
-    {"type": "node_voltage", "name": "4"},
-    {"type": "branch_current", "name": "V1"},
-    {"type": "branch_current", "name": "V2"}
-  ]
-}
-
 #### Simple Voltage Divider Simulation
 POST http://localhost:8000/simulate
 Content-Type: application/json
 
 {
   "circuit_name": "Simple Voltage Divider",
-  "netlist_string": ".title Voltage Divider\nV1 in 0 -500\nR1 in out 10k\nR2 out 0 20k\n .op \n.end",
+  "netlist_string": "V1 in 0 5V\nR1 in out 10k\nR2 out 0 20k\n.op\n.end",
   "analysis_type": "op",
   "analysis_parameters": {},
   "requested_results": [
@@ -145,5 +117,127 @@ Content-Type: application/json
     {"type": "node_voltage", "name": "in"},
     {"type": "node_voltage", "name": "out"},
     {"type": "branch_current", "name": "V1#branch"}
+  ]
+}
+
+### Authentication Tests
+
+### 1. User Registration
+POST http://localhost:8000/auth/register
+Content-Type: application/json
+
+{
+    "username": "testuser",
+    "email": "test@example.com",
+    "password": "testpassword123",
+    "full_name": "Test User"
+}
+
+### 2. User Login
+POST http://localhost:8000/auth/login
+Content-Type: application/json
+
+{
+    "username": "testuser",
+    "password": "testpassword123"
+}
+
+### 3. Get Current User (requires authentication)
+GET http://localhost:8000/auth/me
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0dXNlciIsImV4cCI6MTc1MjE3MjExOH0.Tun2ds4MOVg0AJYvkDSannmrG7ipCRJJTef9NQE4YkQ
+
+### Circuit Management Tests
+
+### 4. Create Circuit (requires authentication)
+POST http://localhost:8000/circuits
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0dXNlciIsImV4cCI6MTc1MjE2NDAzOH0.qc_4OEeQsWM2SaiOyI7xaZKi78SX3KCsbaoYQ1nPzcA
+
+{
+    "name": "RC Low Pass Filter",
+    "description": "Simple RC low pass filter circuit",
+    "netlist": "R1 in out 1k\nC1 out 0 1u\nV1 in 0 DC 5",
+    "is_public": false
+}
+
+### 5. Get User Circuits (requires authentication)
+GET http://localhost:8000/circuits
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0dXNlciIsImV4cCI6MTc1MjE2NDAzOH0.qc_4OEeQsWM2SaiOyI7xaZKi78SX3KCsbaoYQ1nPzcA
+
+### 6. Get Specific Circuit (requires authentication)
+GET http://localhost:8000/circuits/CIRCUIT_ID_HERE
+Authorization: Bearer YOUR_TOKEN_HERE
+
+### Authenticated Simulation Tests
+
+### 7. Run Authenticated Simulation - Operating Point
+POST http://localhost:8000/simulate
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0dXNlciIsImV4cCI6MTc1MjE2OTI0Mn0.nwWk5R1hjFfuin8Wy3JSHfFXu_OfSBORsZqOF4fztk0
+
+{
+    "circuit_name": "RC Circuit Test",
+    "netlist_string": "R1 in out 1k\nC1 out 0 1u\nV1 in 0 DC 5",
+    "analysis_type": "op",
+    "analysis_parameters": {},
+    "requested_results": [
+        {"type": "node_voltage", "name": "out"},
+        {"type": "node_voltage", "name": "in"},
+        {"type": "branch_current", "name": "V1"}
+    ],
+    "save_to_history": true
+}
+
+### 8. Run Authenticated Simulation - Transient Analysis
+POST http://localhost:8000/simulate
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0dXNlciIsImV4cCI6MTc1MjE3MDY5NX0.JgxkMr3m4ylXRTBZkLAFrpvP6PCmNhJ5It81M1wrJDM
+
+{
+    "circuit_name": "RC Transient Response",
+    "netlist_string": "R1 in out 1k\nC1 out 0 1u\nV1 in 0 PULSE(0 5 0 1u 1u 100u 200u)",
+    "analysis_type": "transient",
+    "analysis_parameters": {
+        "step_time": "1u",
+        "end_time": "500u"
+    },
+    "requested_results": [
+        {"type": "node_voltage", "name": "out"},
+        {"type": "node_voltage", "name": "in"}
+    ],
+    "save_to_history": true
+}
+
+### Simulation History Tests
+
+### 9. Get Simulation History (requires authentication)
+GET http://localhost:8000/simulations
+Authorization: Bearer YOUR_TOKEN_HERE
+
+### 10. Get Specific Simulation Details (requires authentication)
+GET http://localhost:8000/simulations/SIMULATION_ID_HERE
+Authorization: Bearer YOUR_TOKEN_HERE
+
+### Health Check (no authentication required)
+
+### 11. Health Check
+
+
+## Check the health of the backend service (Port 8000)
+GET http://localhost:8000/health
+Accept: application/json
+
+### Test Simulation (No Authentication Required)
+POST http://localhost:8000/simulate-test
+Content-Type: application/json
+
+{
+  "circuit_name": "Simple Voltage Divider Test",
+  "netlist_string": "V1 in 0 5V\nR1 in out 10k\nR2 out 0 20k\n.op\n.end",
+  "analysis_type": "op",
+  "analysis_parameters": {},
+  "requested_results": [
+    {"type": "node_voltage", "name": "out"},
+    {"type": "branch_current", "name": "V1"}
   ]
 }

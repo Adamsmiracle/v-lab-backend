@@ -9,17 +9,17 @@ alias deactivate 'test $?_OLD_VIRTUAL_PATH != 0 && setenv PATH "$_OLD_VIRTUAL_PA
 # Unset irrelevant variables.
 deactivate nondestructive
 
-setenv VIRTUAL_ENV /home/miracle/nexus/projects/fyp/vlab_backend
+setenv VIRTUAL_ENV /home/miracle/nexus/fyp/v-lab-backend
 
 set _OLD_VIRTUAL_PATH="$PATH"
 setenv PATH "$VIRTUAL_ENV/"bin":$PATH"
-setenv VIRTUAL_ENV_PROMPT vlab_backend
 
 
 set _OLD_VIRTUAL_PROMPT="$prompt"
 
 if (! "$?VIRTUAL_ENV_DISABLE_PROMPT") then
-    set prompt = "("vlab_backend") $prompt:q"
+    set prompt = '(v-lab-backend) '"$prompt"
+    setenv VIRTUAL_ENV_PROMPT '(v-lab-backend) '
 endif
 
 alias pydoc python -m pydoc

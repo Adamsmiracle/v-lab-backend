@@ -8,3 +8,20 @@ scipy
 matplotlib
 pandas
 
+# Database dependencies (MongoDB)
+motor
+pymongo
+dnspython
+
+# Authentication dependencies  
+python-jose[cryptography]
+passlib[bcrypt]
+python-multipart
+python-dotenv
+
+# Additional utilities
+email-validator
+
+# Additional utilities
+python-dotenv
+
