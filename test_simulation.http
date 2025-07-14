@@ -144,14 +144,14 @@ Content-Type: application/json
 
 ### 3. Get Current User (requires authentication)
 GET http://localhost:8000/auth/me
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0dXNlciIsImV4cCI6MTc1MjE3MjExOH0.Tun2ds4MOVg0AJYvkDSannmrG7ipCRJJTef9NQE4YkQ
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0dXNlciIsImV4cCI6MTc1MjYwODQ2OX0.3Og1hXqCCg0m2KcmgSL2SJaNZ46hS01bmbdGcKdsPU8
 
 ### Circuit Management Tests
 
 ### 4. Create Circuit (requires authentication)
 POST http://localhost:8000/circuits
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0dXNlciIsImV4cCI6MTc1MjE2NDAzOH0.qc_4OEeQsWM2SaiOyI7xaZKi78SX3KCsbaoYQ1nPzcA
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0dXNlciIsImV4cCI6MTc1MjYwODQ2OX0.3Og1hXqCCg0m2KcmgSL2SJaNZ46hS01bmbdGcKdsPU8
 
 {
     "name": "RC Low Pass Filter",
@@ -173,7 +173,7 @@ Authorization: Bearer YOUR_TOKEN_HERE
 ### 7. Run Authenticated Simulation - Operating Point
 POST http://localhost:8000/simulate
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0dXNlciIsImV4cCI6MTc1MjE2OTI0Mn0.nwWk5R1hjFfuin8Wy3JSHfFXu_OfSBORsZqOF4fztk0
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0dXNlciIsImV4cCI6MTc1MjYwODQ2OX0.3Og1hXqCCg0m2KcmgSL2SJaNZ46hS01bmbdGcKdsPU8
 
 {
     "circuit_name": "RC Circuit Test",
