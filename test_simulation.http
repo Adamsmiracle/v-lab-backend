@@ -37,6 +37,8 @@ Content-Type: application/json
 #### Simple Voltage Divider Simulation
 POST http://localhost:8000/simulate
 Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0dXNlciIsImV4cCI6MTc1NDMxMTk2OX0.5eC9h1X5zD9DcnNfy6QlFpdqurt7K87EMyuMP4MAtXc
+
 
 {
   "circuit_name": "Simple Voltage Divider",
@@ -111,7 +113,7 @@ Content-Type: application/json
   "analysis_type": "transient",
   "analysis_parameters": {
     "step_time": "500us",
-    "end_time": "10ms"
+    "end_time": "10ms",
   },
   "requested_results": [
     {"type": "node_voltage", "name": "in"},
@@ -144,7 +146,7 @@ Content-Type: application/json
 
 ### 3. Get Current User (requires authentication)
 GET http://localhost:8000/auth/me
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0dXNlciIsImV4cCI6MTc1MjYwODQ2OX0.3Og1hXqCCg0m2KcmgSL2SJaNZ46hS01bmbdGcKdsPU8
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0dXNlciIsImV4cCI6MTc1NDMxMTk2OX0.5eC9h1X5zD9DcnNfy6QlFpdqurt7K87EMyuMP4MAtXc
 
 ### Circuit Management Tests
 
@@ -216,7 +218,7 @@ Authorization: Bearer YOUR_TOKEN_HERE
 
 ### 10. Get Specific Simulation Details (requires authentication)
 GET http://localhost:8000/simulations/SIMULATION_ID_HERE
-Authorization: Bearer YOUR_TOKEN_HERE
+Authorization: Bearer 
 
 ### Health Check (no authentication required)
 
@@ -239,5 +241,58 @@ Content-Type: application/json
   "requested_results": [
     {"type": "node_voltage", "name": "out"},
     {"type": "branch_current", "name": "V1"}
+  ]
+}
+
+### Diode Circuit Test - Half Wave Rectifier (No Authentication Required)
+POST http://localhost:8000/simulate-test
+Content-Type: application/json
+
+{
+  "circuit_name": "Half Wave Rectifier with Diode",
+  "netlist_string": "* Half Wave Rectifier Circuit\nVIN 1 0 SIN(0 10 60 0 0)\nD1 1 2 DMOD\nRL 2 0 1k\n.model DMOD D(IS=1e-14 N=1.4 RS=10)\n.tran 0.1m 50m\n.end",
+  "analysis_type": "transient",
+  "analysis_parameters": {
+    "step_time": "0.1m",
+    "end_time": "50m"
+  },
+  "requested_results": [
+    {"type": "node_voltage", "name": "1"},
+    {"type": "node_voltage", "name": "2"},
+    {"type": "branch_current", "name": "D1"}
+  ]
+}
+
+### Diode Circuit Test - Forward Bias Operating Point
+POST http://localhost:8000/simulate-test
+Content-Type: application/json
+
+{
+  "circuit_name": "Diode Forward Bias Test",
+  "netlist_string": "* Diode Forward Bias Circuit\nVDD 1 0 5V\nRS 1 2 100\nD1 2 0 DMOD\n.model DMOD D(IS=1e-14 N=1.4 RS=10 VJ=0.7)\n.op\n.end",
+  "analysis_type": "op",
+  "analysis_parameters": {},
+  "requested_results": [
+    {"type": "node_voltage", "name": "1"},
+    {"type": "node_voltage", "name": "2"},
+    {"type": "branch_current", "name": "VDD"},
+    {"type": "branch_current", "name": "D1"}
+  ]
+}
+
+### Diode Circuit Test - Voltage Regulator with Zener Diode
+POST http://localhost:8000/simulate-test
+Content-Type: application/json
+
+{
+  "circuit_name": "Zener Diode Voltage Regulator",
+  "netlist_string": "* Zener Diode Voltage Regulator\nVIN 1 0 12V\nRS 1 2 220\nDZ 2 0 ZENER\nRL 2 0 1k\n.model ZENER D(IS=1e-14 N=1.3 BV=5.1 IBV=1m)\n.op\n.end",
+  "analysis_type": "transient",
+  "analysis_parameters": {},
+  "requested_results": [
+    {"type": "node_voltage", "name": "1"},
+    {"type": "node_voltage", "name": "2"},
+    {"type": "branch_current", "name": "VIN"},
+    {"type": "branch_current", "name": "DZ"}
   ]
 }

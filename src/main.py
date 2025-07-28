@@ -39,9 +39,20 @@ app = FastAPI(
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Adjust this in production
+    allow_origins=[
+        "http://localhost:3000",      # React dev server
+        "http://localhost:5173",      # Vite dev server
+        "http://localhost:8000",      # Backend itself
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:5173", 
+        "http://127.0.0.1:8000",
+        "http://*:3000",              # Allow any IP on port 3000
+        "http://*:5173",              # Allow any IP on port 5173
+        "http://*:8000",              # Allow any IP on port 8000
+        "*"                           # Allow all origins (less secure but works)
+    ],
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
 
@@ -223,7 +234,9 @@ async def register_user(user_create: UserCreate):
     Register a new user account.
     """
     try:
+        print(f"🔐 USER REGISTRATION ATTEMPT: {user_create.username} ({user_create.email})")
         user = await auth_service.create_user(user_create)
+        print(f"✅ USER REGISTERED SUCCESSFULLY: {user.username} (ID: {user.id})")
         return UserResponse(
             id=str(user.id),
             username=user.username,
@@ -232,7 +245,9 @@ async def register_user(user_create: UserCreate):
             is_active=user.is_active,
             created_at=user.created_at
         )
-    except HTTPException:
+    except HTTPException as e:
+        print(f"❌ USER REGISTRATION FAILED: {user_create.username} - {e.detail}")
+        raise
         raise
     except Exception as e:
         raise HTTPException(
@@ -246,8 +261,10 @@ async def login_user(user_login: UserLogin):
     Authenticate user and return access token.
     """
     try:
+        print(f"🔐 LOGIN ATTEMPT: {user_login.username}")
         user = await auth_service.authenticate_user(user_login.username, user_login.password)
         if not user:
+            print(f"❌ LOGIN FAILED: {user_login.username} - Incorrect username or password")
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Incorrect username or password",
@@ -259,10 +276,12 @@ async def login_user(user_login: UserLogin):
             data={"sub": user.username}, expires_delta=access_token_expires
         )
         
+        print(f"✅ LOGIN SUCCESSFUL: {user.username} (ID: {user.id}) - Token issued")
         return Token(access_token=access_token, token_type="bearer")
     except HTTPException:
         raise
     except Exception as e:
+        print(f"❌ LOGIN ERROR: {user_login.username} - {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Login failed: {str(e)}"

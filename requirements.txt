@@ -7,6 +7,7 @@ numpy
 scipy
 matplotlib
 pandas
+ngspice-38
 
 # Database dependencies (MongoDB)
 motor

@@ -1,0 +1,67 @@
+### Network Access Test File for Other Computers
+### Replace 192.168.7.170 with your server's actual IP address
+### Use this file from another computer on the same network
+
+### 1. Health Check Test
+GET http://192.168.7.170:8000/health
+Accept: application/json
+
+### 2. Test Simulation (No Authentication Required)
+POST http://192.168.7.170:8000/simulate-test
+Content-Type: application/json
+
+{
+  "circuit_name": "Network Test Circuit",
+  "netlist_string": "V1 in 0 5V\nR1 in out 10k\nR2 out 0 20k\n.op\n.end",
+  "analysis_type": "op",
+  "analysis_parameters": {},
+  "requested_results": [
+    {"type": "node_voltage", "name": "out"},
+    {"type": "branch_current", "name": "V1"}
+  ]
+}
+
+### 3. User Registration (from network)
+POST http://192.168.7.170:8000/auth/register
+Content-Type: application/json
+
+{
+    "username": "networkuser",
+    "email": "network@example.com",
+    "password": "networkpass123",
+    "full_name": "Network User"
+}
+
+### 4. User Login (from network)
+POST http://192.168.7.170:8000/auth/login
+Content-Type: application/json
+
+{
+    "username": "networkuser",
+    "password": "networkpass123"
+}
+
+### 5. Test Authenticated Simulation (Replace TOKEN with actual token from login)
+POST http://192.168.7.170:8000/simulate
+Content-Type: application/json
+Authorization: Bearer YOUR_TOKEN_HERE
+
+{
+    "circuit_name": "Network Authenticated Test",
+    "netlist_string": "V1 in 0 3.3V\nR1 in out 5k\nR2 out 0 15k\n.op\n.end",
+    "analysis_type": "op",
+    "analysis_parameters": {},
+    "requested_results": [
+        {"type": "node_voltage", "name": "out"},
+        {"type": "branch_current", "name": "V1"}
+    ],
+    "save_to_history": true
+}
+
+### 6. Get User Circuits (Replace TOKEN with actual token)
+GET http://192.168.7.170:8000/circuits
+Authorization: Bearer YOUR_TOKEN_HERE
+
+### 7. Get Simulation History (Replace TOKEN with actual token)
+GET http://192.168.7.170:8000/simulations
+Authorization: Bearer YOUR_TOKEN_HERE
